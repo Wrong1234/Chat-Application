@@ -1,21 +1,23 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+import LoginForm from "./Auth/loginPage.jsx";
+import SignupForm from "./Auth/signupPage.jsx";
+import ChatApp from "./Components/ChatApp.jsx"
+import './app.css'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
-      <div className="flex justify-center text-center">
-
-        <div className='mt-10'>
-            <p className="text-2xl ">Chat App</p>
-        </div>
+      <div>
+         <Routes>
+            <Route path="/" element={<ChatApp />} />
+            <Route path="/signup" element={<SignupForm />} />
+            <Route path="/login" element={<LoginForm />} />
+         </Routes>
       </div>
+    
     </>
-  )
+  );
 }
 
-export default App
+export default App;
