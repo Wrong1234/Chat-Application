@@ -1,8 +1,8 @@
-import RoleType from '../../lib/types.js';
+// import RoleType from '../../lib/types.js';
 import mongoose from 'mongoose';
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
-import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../core/config/config.js';
+// import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../core/config/config.js';
 
 
 const AddressSchema = new mongoose.Schema({
@@ -20,6 +20,7 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     username: { type: String },
+    phone: {type: String},
     dob: { type: Date, default: null },
     gender: {
       type: String,
@@ -29,8 +30,8 @@ const UserSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      default: RoleType.USER,
-      enum: [RoleType.USER, RoleType.ADMIN],
+      default: "USER",
+      enum: ['USER', 'ADMIN'],
     },
 
     stripeAccountId: { type: String, default: null },
