@@ -1,4 +1,4 @@
-import { generateResponse } from '../middleware/responseFormate.js';
+import { generateResponse } from '../../middleware/responseFormate.js';
 import User from './auth.model.js';
 import {
   loginUserService,

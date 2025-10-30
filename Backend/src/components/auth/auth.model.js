@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
-// import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../core/config/config.js';
+import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../config/config.js';
 
 
 const AddressSchema = new mongoose.Schema({
@@ -42,6 +42,26 @@ const UserSchema = new mongoose.Schema(
     profileImage: { type: String, default: '' },
     multiProfileImage: { type: [String], default: [] },
     pdfFile: { type: String, default: '' },
+    about: {
+    type: String,
+    default: 'Hey there! I am using WhatsApp'
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  lastSeen: {
+    type: Date,
+    default: Date.now
+  },
+  contacts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  blockedUsers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
 
     otp: {
       type: String,

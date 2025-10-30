@@ -21,8 +21,9 @@ export default function SignupForm() {
   // Handle input changes
   const handleChange = (e) => {
     setFormData({
-      ...formData,
+      ...formData, 
       [e.target.name]: e.target.value
+     
     });
     // Clear error when user starts typing
     if (errors[e.target.name]) {
@@ -88,14 +89,14 @@ export default function SignupForm() {
     
     try {
       // FIXED: Uncommented the API call
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch('http://localhost:4000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          name: formData.name,
+          fullName: formData.name,
           email: formData.email,
           password: formData.password,
           password_confirmation: formData.confirmPassword, // Fixed: was undefined
