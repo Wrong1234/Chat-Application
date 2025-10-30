@@ -1,5 +1,4 @@
 import User from './auth.model.js';
-// import Profile from '../profile/profileModel.js';
 import jwt from 'jsonwebtoken';
 // import { refreshTokenSecrete, emailExpires } from '../../core/config/config.js';
 // import sendEmail from '../../lib/sendEmail.js';
@@ -14,8 +13,9 @@ export const registerUserService = async ({
   password, 
   phone,
 }) => {
-  const existingUser = await User.findOne({ email });
-  if (existingUser) throw new Error('User already registered.');
+  const existingUser1 = await User.findOne({ email });
+  const existingUser2 = await User.findOne({ phone });
+  if (existingUser1 || existingUser2) throw new Error('User already registered.');
 
   const newUser = new User({
     fullName,

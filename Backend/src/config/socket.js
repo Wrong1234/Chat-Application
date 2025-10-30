@@ -11,7 +11,7 @@ export const initializeSocket = (httpServer) => {
     pingTimeout: 60000,
     pingInterval: 25000,
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5000',
+      origin: process.env.CLIENT_URL || 'http://localhost:5173',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
     },
@@ -21,6 +21,7 @@ export const initializeSocket = (httpServer) => {
   // Socket connection handler
   io.on('connection', (socket) => {
     logger.info(`🟢 User connected: ${socket.id}`);
+    console.log("connected to socket.io");
     socketHandler(io, socket);
   });
 
