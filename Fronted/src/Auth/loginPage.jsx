@@ -8,6 +8,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
   
   const [formData, setFormData] = useState({
     email: "",
@@ -66,7 +67,7 @@ export default function LoginForm() {
     console.log('Login data:', formData);
 
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch('http://localhost:4000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,18 +82,17 @@ export default function LoginForm() {
 
       const data = await response.json();
 
-      if (response.ok) {
+     if (response.ok) {
+        const { accessToken, refreshToken, user } = data.data; // ✅ correct destructure
+
         setMessage('Login successful! Redirecting...');
-        console.log('Token:', data.token);
-        console.log('User:', data.user);
-        
-        // Store token if needed
-        if (formData.remember) {
-          localStorage.setItem('token', data.token);
-        } else {
-          sessionStorage.setItem('token', data.token);
-        }
-        
+        console.log('Access Token:', accessToken);
+        console.log('User:', user);
+
+        // Optional: store user info
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('token', accessToken);
+
         // Clear form
         setFormData({
           email: '',
@@ -100,9 +100,9 @@ export default function LoginForm() {
           remember: false,
         });
 
-        // Redirect to dashboard or home
+        // Redirect
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate('/');
         }, 1000);
       } else {
         if (data.errors) {
@@ -111,11 +111,8 @@ export default function LoginForm() {
           setMessage(data.message || 'Login failed. Please check your credentials.');
         }
       }
-    } catch (error) {
+    }catch(err){
       setMessage('An error occurred. Please try again.');
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

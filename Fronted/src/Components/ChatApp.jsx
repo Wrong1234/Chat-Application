@@ -1,18 +1,14 @@
+import { useState } from "react";
+import Sidebar from "./sidebar.jsx"
+import ChatWindow from "./chat-window.jsx"
 
-const ChatApp = () => {
+export default function ChatApp() {
+  const [selectedChat, setSelectedChat] = useState(0)
 
-    
-
-    return (
-        <>
-
-        <div className="flex justify-center mt-10 text-2xl">
-            <div>
-                <h1>ChatApp</h1>
-            </div>
-        </div>
-        </>
-    )
+  return (
+    <div className="flex h-screen bg-background text-foreground">
+      <Sidebar selectedChat={selectedChat} onSelectChat={setSelectedChat} />
+      <ChatWindow selectedChat={selectedChat} />
+    </div>
+  )
 }
-
-export default ChatApp
