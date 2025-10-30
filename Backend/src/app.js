@@ -7,7 +7,9 @@ import dotenv from 'dotenv';
 import { applyMiddleware } from './middleware/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
-// import { routes } from './routes/index.js';
+import  routes  from './routes/index.js';
+import cors from "cors";
+import helmet from "helmet";
 
 dotenv.config();
 
@@ -15,6 +17,15 @@ const app = express();
 
 // Apply security and parsing middleware
 applyMiddleware(app);
+
+app.use(helmet());
+app.use(
+    cors({
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    })
+  );
 
 // Health check
 app.get('/health', (req, res) => {
@@ -26,7 +37,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-// app.use('/api', routes);
+app.use('/api', routes);
 
 // Error handling
 app.use(notFound);

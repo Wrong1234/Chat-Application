@@ -1,29 +1,126 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    remember: false,
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+    setLoading(true);
+    setMessage('');
+    setErrors({});
+    
+    // Validate form
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
+
+    console.log('Login data:', formData);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          remember: formData.remember,
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Login successful! Redirecting...');
+        console.log('Token:', data.token);
+        console.log('User:', data.user);
+        
+        // Store token if needed
+        if (formData.remember) {
+          localStorage.setItem('token', data.token);
+        } else {
+          sessionStorage.setItem('token', data.token);
+        }
+        
+        // Clear form
+        setFormData({
+          email: '',
+          password: '',
+          remember: false,
+        });
+
+        // Redirect to dashboard or home
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        if (data.errors) {
+          setErrors(data.errors);
+        } else {
+          setMessage(data.message || 'Login failed. Please check your credentials.');
+        }
+      }
+    } catch (error) {
+      setMessage('An error occurred. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-5 w-md mx-auto p-10 shadow-amber-600 border mt-5 rounded-2xl">
+    <div className="space-y-5 w-md mx-auto p-10 shadow-amber-600 border mt-5 rounded-2xl mb-6">
       {/* Header */}
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
@@ -31,6 +128,17 @@ export default function LoginForm() {
           Sign in to your account to continue
         </p>
       </div>
+
+      {/* Success/Error Message Display */}
+      {message && (
+        <div className={`p-3 rounded-lg text-center ${
+          message.includes('success') 
+            ? 'bg-green-100 text-green-800 border border-green-300' 
+            : 'bg-red-100 text-red-800 border border-red-300'
+        }`}>
+          {message}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -55,6 +163,7 @@ export default function LoginForm() {
               required
             />
           </div>
+          {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
         </div>
 
         {/* Password Input */}
@@ -97,13 +206,17 @@ export default function LoginForm() {
               )}
             </button>
           </div>
+          {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
         </div>
 
         {/* Remember Me */}
         <div className="flex items-center">
           <input
             id="remember"
+            name="remember"
             type="checkbox"
+            checked={formData.remember}
+            onChange={handleChange}
             className="w-4 h-4 rounded border-border bg-input cursor-pointer accent-primary"
           />
           <label
@@ -117,10 +230,10 @@ export default function LoginForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className="w-full py-3 px-4 bg-amber-400 cursor-pointer from-primary to-accent text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
               Signing in...
@@ -134,29 +247,12 @@ export default function LoginForm() {
         </button>
       </form>
 
-      {/* Divider */}
-      <div className="relative">
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-background text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-
-      {/* Social Buttons */}
-      <div className="grid grid-cols-2 gap-3">
-        <button className="py-3 px-4 border border-border rounded-lg hover:bg-secondary transition-smooth font-medium text-foreground">
-          Google
-        </button>
-        <button className="py-3 px-4 border border-border rounded-lg hover:bg-secondary transition-smooth font-medium text-foreground">
-          GitHub
-        </button>
-      </div>
-
       {/* Switch to Signup */}
       <p className="text-center text-muted-foreground">
         Don't have an account?{" "}
         <button
+          type="button"
+          onClick={() => navigate('/signup')}
           className="text-primary font-semibold hover:text-accent transition-smooth cursor-pointer"
         >
           Sign up
