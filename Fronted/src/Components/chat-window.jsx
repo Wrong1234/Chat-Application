@@ -1,51 +1,92 @@
 // Chat Window Component
 import { useState, useRef, useEffect } from "react";
 import { Send, Phone, Video, Search, MoreVertical, Menu, MessageCircle, Users, Settings, ArrowLeft, Paperclip, Smile, Mic } from "lucide-react";
+import io from "socket.io-client";
 
 import  Button  from "./Button.jsx";
-// Chat Window Component
-function ChatWindow({ selectedChat, onSendMessage, onBack, isMobileView }) {
+function ChatWindow({ selectedChat, onBack, isMobileView }) {
   const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({
-    message: ""
-  });
+  const [messages, setMessages] = useState([]);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [formData, setFormData] = useState({ message: "" });
   const messagesEndRef = useRef(null);
+  const socket = useRef(null);
+  const selectedChatRef = useRef(null); // ✅ persistent reference
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const ENDPOINT = "http://localhost:4000";
+  const id = selectedChat?._id || selectedChat?.id || null;
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?._id;
+
+  // ✅ Fetch messages
+  const fetchMessages = async () => {
+    if (!id) return;
+    try {
+      const response = await fetch(`${ENDPOINT}/api/messages/get/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+
+      const result = await response.json();
+      if (result.status) {
+        setMessages(result.data);
+        socket.current?.emit("join-chat", id);
+      }
+    } catch (error) {
+      console.error("Failed to fetch messages:", error);
+    }
   };
 
+  // ✅ Initialize socket connection
   useEffect(() => {
-    scrollToBottom();
-  }, [selectedChat?.messages]);
+    socket.current = io(ENDPOINT);
+    socket.current.emit("setup", userId); // safer custom event
+    socket.current.on("connect", () => setSocketConnected(true));
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+    return () => socket.current?.disconnect();
+  }, [userId]);
+
+  // ✅ Fetch messages when chat changes
+  useEffect(() => {
+    fetchMessages();
+    selectedChatRef.current = selectedChat;
+  }, [id]);
+
+  // ✅ Listen for new messages
+  useEffect(() => {
+    socket.current?.on("receive-message", (newMessage) => {
+      if (!selectedChatRef.current || newMessage.chatId !== selectedChatRef.current.id) return;
+      setMessages((prev) => [...prev, newMessage]);
     });
 
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: ''
-      });
-    }
+    return () => {
+      socket.current?.off("receive-message");
+    };
+  }, []);
+
+  // ✅ Scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ✅ Handle message input
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: "" });
   };
 
+  // ✅ Validate form
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    } else if (formData.message.length < 1) {
-      newErrors.message = 'Message must be at least 1 character';
-    }
-
+    if (!formData.message.trim()) newErrors.message = "Message is required";
     return newErrors;
   };
 
-  const handleSendMessage = (e) => {
+  // ✅ Send message
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     setErrors({});
 
@@ -55,9 +96,36 @@ function ChatWindow({ selectedChat, onSendMessage, onBack, isMobileView }) {
       return;
     }
 
-    onSendMessage(selectedChat.id, formData.message);
-    setFormData({ message: "" });
+    try {
+      const response = await fetch(`${ENDPOINT}/api/messages/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+        body: JSON.stringify({
+          chatId: id,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessages((prev) => [...prev, data.data]);
+        socket.current.emit("send-message", {
+          chatId: id,
+          senderId: userId,
+          content: formData.message,
+        });
+        setFormData({ message: "" });
+      } else {
+        console.error(data.message || "Message sending failed");
+      }
+    } catch (error) {
+      console.error("An error occurred while sending message:", error);
+    }
   };
+
 
   if (!selectedChat) {
     return (
@@ -126,7 +194,7 @@ function ChatWindow({ selectedChat, onSendMessage, onBack, isMobileView }) {
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1d5db' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}
       >
-        {selectedChat.messages.length > 0 ? (
+        {/* {selectedChat.messages.length > 0 ? (
           <>
             {selectedChat.messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"} animate-fadeIn`}>
@@ -157,6 +225,27 @@ function ChatWindow({ selectedChat, onSendMessage, onBack, isMobileView }) {
                     {msg.isOwn && (
                       <span className="text-xs text-green-100">✓✓</span>
                     )}
+                  </div>
+                </div>
+              </div>
+            ))} */}
+            {messages.length > 0 ? (
+          <>
+            {messages.map((msg) => (
+              <div
+                key={msg._id}
+                className={`flex ${msg.sender?._id === userId ? "justify-end" : "justify-start"} animate-fadeIn`}
+              >
+                <div
+                  className={`max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${
+                    msg.sender?._id === localStorage.getItem("userId")
+                      ? "bg-green-500 text-white rounded-br-none"
+                      : "bg-white text-gray-900 rounded-bl-none"
+                  }`}
+                >
+                  <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </div>
                 </div>
               </div>

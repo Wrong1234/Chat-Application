@@ -65,37 +65,26 @@ export const loginUser = async (req, res, next) => {
 };
 
 
-// export const refreshAccessToken = async (req, res, next) => {
-//   try {
-//     const { refreshToken } = req.body; 
+export const getAllUsers = async (req, res, next) => {
+  try {
+    
+    // const users = await User.find();
+    const currentUserId = req.user._id;
+    const users = await User.find({ _id: { $ne: currentUserId } });
 
-//     console.log('Received refresh token:', refreshToken);
-//     if (!refreshToken) generateResponse(res, 400, false, 'No refresh token provided', null);
+    generateResponse(res, 200, true, "Get all user successfully", users);
 
-//     const tokens = await refreshAccessTokenService(refreshToken);
-
-//     // ✅ Update refresh token cookie
-//     res.cookie('refreshToken', tokens.refreshToken, {
-//       httpOnly: true,
-//       secure: true,
-//       sameSite: 'strict',
-//       path: '/',
-//       maxAge: 30 * 24 * 60 * 60 * 1000, // 7 days
-//     });
-
-//     generateResponse(res, 200, true, 'Token refreshed successfully', { accessToken: tokens.accessToken });
-
-//   } catch (error) {
-//     if (['No refresh token provided', 'Invalid refresh token'].includes(error.message)) {
-//       res.status(400).json({
-//         success: false,
-//         message: error.message
-//       });
-//     } else {
-//       next(error);
-//     }
-//   }
-// };
+  } catch (error) {
+    if (['users not found'].includes(error.message)) {
+      res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    } else {
+      next(error);
+    }
+  }
+};
 
 
 

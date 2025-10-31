@@ -10,7 +10,6 @@ const sendMessage = async(req, res, next) =>{
     try{
 
         const result = await senderMessageService({ chatId, message, senderId, messageType, mediaUrl});
-        console.log(result);
         generateResponse(res, 201, true, "Message Send Successfully", result);
 
     }catch(err){
