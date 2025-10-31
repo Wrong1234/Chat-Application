@@ -18,15 +18,6 @@ const app = express();
 // Apply security and parsing middleware
 applyMiddleware(app);
 
-app.use(helmet());
-app.use(
-    cors({
-      origin: true,
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    })
-  );
-
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({

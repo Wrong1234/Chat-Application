@@ -21,7 +21,7 @@ export const senderMessageService = async({
     }
 }
 
-export const getMessageService = async({ id, senderId, page, limit }) => {
+export const getMessageService = async({ receiverId, senderId, page, limit }) => {
 
     try{
 
@@ -29,7 +29,7 @@ export const getMessageService = async({ id, senderId, page, limit }) => {
             chat: id,
             deletedFor: { $ne: senderId }
             })
-            .populate('sender', 'name profilePicture')
+            .populate('sender', 'name profileImage')
             .populate('replyTo')
             .sort({ createdAt: -1 })
             .limit(limit * 1)

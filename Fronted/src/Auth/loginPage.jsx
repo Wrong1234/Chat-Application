@@ -86,9 +86,6 @@ export default function LoginForm() {
         const { accessToken, refreshToken, user } = data.data; // ✅ correct destructure
 
         setMessage('Login successful! Redirecting...');
-        console.log('Access Token:', accessToken);
-        console.log('User:', user);
-
         // Optional: store user info
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('token', accessToken);

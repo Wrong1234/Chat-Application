@@ -110,6 +110,8 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
       });
 
       const data = await response.json();
+      console.log(data);
+      console.log(userId);
       if (response.ok) {
         setMessages((prev) => [...prev, data.data]);
         socket.current.emit("send-message", {
