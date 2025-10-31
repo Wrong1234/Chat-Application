@@ -1,62 +1,29 @@
+// Sidebar Component
 import { useState } from "react";
 import { Search, Menu, MessageCircle, Users, Settings } from "lucide-react";
 import ChatItem from "./chat-item.jsx";
-import { Button } from "./Button.jsx";
+import  Button  from "./Button.jsx";
 
-const CHATS = [
-  {
-    id: 1,
-    name: "SCALEUP | Betopia",
-    message: "Rubel Das: This message was deleted",
-    time: "8:42 am",
-    avatar: "👥",
-    unread: true,
-  },
-  {
-    id: 2,
-    name: "IT | Betopia",
-    message: "MD ZOBAIR AHMED: Headphone provided",
-    time: "Yesterday",
-    avatar: "👨",
-    unread: false,
-  },
-  {
-    id: 3,
-    name: "SCALEUP | Betopia",
-    message: "SAA [Operation Only]",
-    time: "Yesterday",
-    avatar: "👥",
-    unread: false,
-  },
-  {
-    id: 4,
-    name: "Khaled Saifullah",
-    message: "✓✓ $2y$12$1HiSacK...",
-    time: "Yesterday",
-    avatar: "👤",
-    unread: false,
-  },
-  {
-    id: 5,
-    name: "Kongkon Jowarder",
-    message: "✓✓ [[baseURL]]/dashboard/static-data",
-    time: "Tuesday",
-    avatar: "👤",
-    unread: false,
-  },
-];
-
-export default function Sidebar({ selectedChat, onSelectChat }) {
+function Sidebar({ selectedChat, onSelectChat, chats, isMobileView }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
-  //fetch all users
-  
+  const filteredChats = chats.filter(chat => {
+    const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = 
+      activeTab === "all" ? true :
+      activeTab === "unread" ? chat.unread > 0 :
+      activeTab === "groups" ? chat.isGroup :
+      activeTab === "favourites" ? chat.isFavourite : true;
+    return matchesSearch && matchesTab;
+  });
 
   return (
-    <div className="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-screen">
+    <div className={`w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-screen ${
+      isMobileView && selectedChat ? 'hidden' : 'flex'
+    }`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
           <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100">
@@ -78,13 +45,13 @@ export default function Sidebar({ selectedChat, onSelectChat }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 px-4 pt-4 border-b border-gray-200 overflow-x-auto">
+      <div className="flex gap-2 px-3 pt-4 border-b border-gray-200 overflow-x-auto pb-4 scrollbar-hide">
         {["all", "unread", "favourites", "groups"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab ? "bg-gray-900 text-white" : "text-gray-600 hover:text-gray-900"
+            className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              activeTab === tab ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -94,28 +61,40 @@ export default function Sidebar({ selectedChat, onSelectChat }) {
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
-        {CHATS.map((chat, index) => (
-          <ChatItem
-            key={chat.id}
-            chat={chat}
-            isSelected={selectedChat === index}
-            onClick={() => onSelectChat(chat)}
-          />
-        ))}
+        {filteredChats.length > 0 ? (
+          filteredChats.map((chat) => (
+            <ChatItem
+              key={chat.id + 1}
+              chat={chat}
+              isSelected={selectedChat?.id === chat.id}
+              onClick={() => onSelectChat(chat)}
+            />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
+            <p className="text-gray-500 text-sm">No chats found</p>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation (Mobile) */}
-      <div className="p-4 border-t border-gray-200 flex gap-2 justify-around md:hidden bg-white">
-        <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100">
+      <div className="p-3 border-t border-gray-200 flex gap-1 justify-around md:hidden bg-white">
+        <Button variant="ghost" className="flex-1 flex flex-col items-center gap-1 h-auto py-2 text-green-600">
           <MessageCircle className="h-5 w-5" />
+          <span className="text-xs">Chats</span>
         </Button>
-        <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100">
+        <Button variant="ghost" className="flex-1 flex flex-col items-center gap-1 h-auto py-2 text-gray-600 hover:bg-gray-100">
           <Users className="h-5 w-5" />
+          <span className="text-xs">Groups</span>
         </Button>
-        <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100">
+        <Button variant="ghost" className="flex-1 flex flex-col items-center gap-1 h-auto py-2 text-gray-600 hover:bg-gray-100">
           <Settings className="h-5 w-5" />
+          <span className="text-xs">Settings</span>
         </Button>
       </div>
     </div>
   );
 }
+
+export default Sidebar;

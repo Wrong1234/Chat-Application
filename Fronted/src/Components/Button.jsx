@@ -1,34 +1,22 @@
-import React from "react";
-import clsx from "clsx"; // optional for combining class names easily
-
-export const Button = ({ 
-  children, 
-  variant = "default", 
-  size = "md", 
-  className = "", 
-  ...props 
-}) => {
-  const baseStyles =
-    "inline-flex items-center justify-center rounded-lg font-medium focus:outline-none transition-colors";
-
-  const variantStyles = {
-    default: "bg-green-600 text-white hover:bg-green-700",
-    ghost: "bg-transparent hover:bg-gray-100 text-gray-700",
-    outline: "border border-gray-300 hover:bg-gray-100 text-gray-700",
+function Button({ variant = "default", size = "default", className = "", children, ...props }) {
+  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none disabled:opacity-50";
+  const variants = {
+    default: "bg-primary text-white hover:bg-primary/90",
+    ghost: "hover:bg-accent hover:text-accent-foreground",
   };
-
-  const sizeStyles = {
-    sm: "px-3 py-1 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-5 py-3 text-lg",
-    icon: "p-2", // for icon-only buttons
+  const sizes = {
+    default: "h-10 px-4 py-2",
+    icon: "h-10 w-10",
   };
-
-  const classes = clsx(baseStyles, variantStyles[variant], sizeStyles[size], className);
 
   return (
-    <button className={classes} {...props}>
+    <button
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
       {children}
     </button>
   );
-};
+}
+
+export default Button
