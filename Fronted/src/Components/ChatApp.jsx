@@ -3,150 +3,47 @@ import Sidebar from "./sidebar.jsx"
 import ChatWindow from "./chat-window.jsx"
 // Main Chat App Component
 export default function ChatApp() {
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      name: "SCALEUP | Betopia",
-      message: "Rubel Das: This message was deleted",
-      time: "8:42 am",
-      avatar: "👥",
-      unread: 3,
-      online: true,
-      isGroup: true,
-      isFavourite: false,
-      messages: [
-        {
-          id: 1,
-          sender: "SCALEUP | Betopia",
-          text: "Welcome to the group!",
-          time: "8:30 am",
-          isOwn: false,
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "IT | Betopia",
-      message: "MD ZOBAIR AHMED: Headphone provided",
-      time: "Yesterday",
-      avatar: "👨",
-      unread: 0,
-      online: false,
-      isGroup: true,
-      isFavourite: true,
-      messages: [
-        {
-          id: 1,
-          sender: "MD ZOBAIR AHMED",
-          text: "Headphone provided",
-          time: "Yesterday",
-          isOwn: false,
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: "SCALEUP | Betopia",
-      message: "SAA [Operation Only]",
-      time: "Yesterday",
-      avatar: "👥",
-      unread: 0,
-      online: false,
-      isGroup: true,
-      isFavourite: false,
-      messages: []
-    },
-    {
-      id: 4,
-      name: "SCALEUP | Betopia",
-      message: "SAA [Operation Only]",
-      time: "Yesterday",
-      avatar: "👥",
-      unread: 0,
-      online: false,
-      isGroup: true,
-      isFavourite: false,
-      messages: []
-    },
-    {
-      id: 5,
-      name: "SCALEUP | Betopia",
-      message: "SAA [Operation Only]",
-      time: "Yesterday",
-      avatar: "👥",
-      unread: 0,
-      online: false,
-      isGroup: true,
-      isFavourite: false,
-      messages: []
-    },
-    {
-      id: 6,
-      name: "SCALEUP | Betopia",
-      message: "SAA [Operation Only]",
-      time: "Yesterday",
-      avatar: "👥",
-      unread: 0,
-      online: false,
-      isGroup: true,
-      isFavourite: false,
-      messages: []
-    },
-    {
-      id: 7,
-      name: "Khaled Saifullah",
-      message: "✓✓ $2y$12$1HiSacK...",
-      time: "Yesterday",
-      avatar: "👤",
-      unread: 0,
-      online: true,
-      isGroup: false,
-      isFavourite: false,
-      messages: []
-    },
-    {
-      id: 8,
-      name: "Kongkon Jowarder",
-      message: "✓✓ [[baseURL]]/dashboard/static-data",
-      time: "Tuesday",
-      avatar: "👤",
-      unread: 0,
-      online: false,
-      isGroup: false,
-      isFavourite: true,
-      messages: [
-        {
-          id: 1,
-          sender: "Kongkon Jowarder",
-          text: "Use WhatsApp on your phone to see older messages from before 27/7/2025.",
-          time: "16/10/2025",
-          isOwn: false,
+  const [chats, setChats] = useState([]);
+
+
+  //fetch all users
+  const users = async() => {
+    try{
+
+      const response = await fetch("http://localhost:4000/api/auth/users",{
+        method: "GET",
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: "Bearer " + localStorage.getItem("token"),
         },
-        {
-          id: 2,
-          sender: "You",
-          text: "Wrong1234 - Overview\nStudied Islamic University, Bangladesh\nDept : Computer Science And Engineering - Wrong1234\ngithub.com",
-          time: "1:00 pm",
-          isOwn: true,
-          link: "https://github.com/Wrong1234",
-        },
-        {
-          id: 3,
-          sender: "You",
-          text: "[[baseURL]]/dashboard/revenue-report?filterType=year&year=2025",
-          time: "11:48 am",
-          isOwn: true,
-        },
-        {
-          id: 4,
-          sender: "You",
-          text: "[[baseURL]]/dashboard/revenue-report?filterType=month&month=10",
-          time: "11:50 am",
-          isOwn: true,
-        },
-      ]
-    },
-  ]);
+
+      });
+      
+      const data = await response.json();
+
+      // 🧩 Transform backend data into sidebar format
+      const formattedUsers = data.data.map((user, index) => ({
+        id: user._id, // or index + 1
+        name: user.fullName,
+        message: user.about || "Hey there! I am using WhatsApp",
+        time: "Online recently",
+        avatar: "👤",
+        unread: 0,
+        online: user.isOnline,
+        isGroup: false,
+        isFavourite: false,
+        messages: [],
+      }));
+
+      setChats(formattedUsers);
+    }catch (error) {
+    console.error("Failed to load users:", error);
+  }
+
+}
+  useEffect(() =>{
+    users();
+  }, [])
 
   const [selectedChat, setSelectedChat] = useState(null);
   const [isMobile, setIsMobile] = useState(false);

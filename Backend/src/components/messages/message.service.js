@@ -35,7 +35,7 @@ export const getMessageService = async({ id, senderId, page, limit }) => {
             .limit(limit * 1)
             .skip((page - 1) * limit);
 
-        return messages;
+        return messages.reverse();
 
 
     }catch(err){

@@ -19,7 +19,7 @@ export const socketHandler = (io, socket) => {
   socket.on('join-chat', (chatId) => handleJoinChat(socket, chatId));
 
   // Handle new message
-  socket.on('send-message', (message) => handleSendMessage(socket, message));
+  socket.on('send-message', (message) => handleSendMessage(io, socket, message));
 
   // Typing indicators
   socket.on('typing', (data) => handleTyping(socket, data));
