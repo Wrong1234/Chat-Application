@@ -21,10 +21,11 @@ const getMessage = async (req, res) => {
   const { page = 1, limit = 10, sort = "-createdAt" } = req.query;
   const { id } = req.params;
   const senderId = req.user._id;
+  const receiverId = id;
 
   try {
     const messages = await getMessageService({
-      id,
+      receiverId,
       senderId,
       page: Number(page),
       limit: Number(limit),
