@@ -9,21 +9,44 @@ import {
   handleSendMessage,
   handleTyping,
   handleStopTyping,
+  handleLeaveChat,
 } from './socketEvents.js';
 
 export const socketHandler = (io, socket) => {
+  logger.info(`🟢 New socket connection: ${socket.id}`);
+  
   // User joins their personal room
-  socket.on('join', (userId) => handleJoinUser(socket, userId));
+  socket.on('join', (senderId) => {
+    if (senderId) {
+      handleJoinUser(socket, senderId);
+    } else {
+      logger.error("❌ Join event received without senderId");
+    }
+  });
 
-  // User joins a chat room
-  socket.on('join-chat', (chatId) => handleJoinChat(socket, chatId));
+  // User joins a specific chat room
+  socket.on('join-chat', (data) => {
+    handleJoinChat(socket, data);
+  });
+
+  // User leaves a chat room
+  socket.on('leave-chat', (data) => {
+    handleLeaveChat(socket, data);
+  });
 
   // Handle new message
-  socket.on('send-message', (message) => handleSendMessage(io, socket, message));
+  socket.on('send-message', (data) => {
+    handleSendMessage(io, socket, data);
+  });
 
   // Typing indicators
-  socket.on('typing', (data) => handleTyping(socket, data));
-  socket.on('stop-typing', (data) => handleStopTyping(socket, data));
+  socket.on('typing', (data) => {
+    handleTyping(socket, data);
+  });
+  
+  socket.on('stop-typing', (data) => {
+    handleStopTyping(socket, data);
+  });
 
   // Handle disconnection
   socket.on('disconnect', () => {

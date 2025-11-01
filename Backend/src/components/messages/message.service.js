@@ -3,42 +3,56 @@ import Message from './message.model.js';
 
 
 export const senderMessageService = async({
-    chatId, message, messageType, senderId, mediaUrl
+    receiverId, message, messageType, senderId, mediaUrl
 }) => {
     try{
          const sendMessage = await Message.create({
-            chat: chatId,
-            sender: senderId,
+            receiverId,
+            senderId,
             message,
             messageType,
             mediaUrl
         });
 
-        return sendMessage;
+         const populatedMessage = await sendMessage.populate([
+            { path: "senderId", select: "_id profileImage" },
+            { path: "receiverId", select: "_id profileImage" }
+        ]);
+
+        return populatedMessage;
     }
     catch(err){
         throw new Error('Invalid message send error');
     }
 }
 
+// Service
 export const getMessageService = async({ receiverId, senderId, page, limit }) => {
+  try {
+    const messages = await Message.find({
+      $or: [
+        { senderId: senderId, receiverId: receiverId },
+        { senderId: receiverId, receiverId: senderId }
+      ],
+      deletedFor: { $nin: [senderId] }
+    })
+    .populate('senderId', 'name profileImage')
+    .populate('receiverId', 'name profileImage')
+    .populate({
+      path: 'replyTo',
+      populate: {
+        path: 'senderId',
+        select: 'name profileImage'
+      }
+    })
+    .sort({ createdAt: -1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .lean();
 
-    try{
+    return messages.reverse();
 
-        const messages = await Message.find({
-            chat: id,
-            deletedFor: { $ne: senderId }
-            })
-            .populate('sender', 'name profileImage')
-            .populate('replyTo')
-            .sort({ createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
-
-        return messages.reverse();
-
-
-    }catch(err){
-        throw new Error("Invalid id provide correct id");
-    }
+  } catch(err) {
+    throw new Error("Invalid id, please provide correct id");
+  }
 }

@@ -1,6 +1,6 @@
-// ============================================
-// FILE: src/config/socket.js
-// ============================================
+// // ============================================
+// // FILE: src/config/socket.js
+// // ============================================
 
 import { Server } from 'socket.io';
 import { socketHandler } from '../socket/socketHandler.js';
@@ -21,7 +21,6 @@ export const initializeSocket = (httpServer) => {
   // Socket connection handler
   io.on('connection', (socket) => {
     logger.info(`🟢 User connected: ${socket.id}`);
-    console.log("connected to socket.io");
     socketHandler(io, socket);
   });
 

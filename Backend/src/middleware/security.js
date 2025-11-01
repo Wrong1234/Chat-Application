@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 export const applyMiddleware = (app) => {
+  
   // Security
   app.use(helmet());
   
