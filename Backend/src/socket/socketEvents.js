@@ -31,7 +31,7 @@ export const handleJoinChat = (socket, data) => {
 
 export const handleSendMessage = (io, socket, data) => {
   try {
-    // console.log("📨 Incoming message data:", data);
+
     
     const { receiverId, senderId, message } = data;
 

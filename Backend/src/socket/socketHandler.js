@@ -1,5 +1,5 @@
 // ============================================
-// FILE: src/socket/socketHandler.js
+// FILE: src/socket/socketHandler.js - FIXED VERSION
 // ============================================
 
 import { logger } from '../utils/logger.js';
