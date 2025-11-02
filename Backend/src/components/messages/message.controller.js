@@ -11,10 +11,10 @@ const sendMessage = async(req, res, next) => {
         if (!receiverId) {
             return generateResponse(res, 400, false, "Receiver ID is required", null);
         }
-
         if (!message && !file) {
             return generateResponse(res, 400, false, "Message or file is required", null);
         }
+
 
         console.log('📨 Send message request:', {
             receiverId,
@@ -41,11 +41,14 @@ const sendMessage = async(req, res, next) => {
     }
 }
 
+// Controller
 const getMessage = async (req, res) => {
+
     const { page = 1, limit = 50, sort = "-createdAt" } = req.query;
     const { id } = req.params; // receiverId
     const senderId = req.user._id;
     const receiverId = id;
+
 
     try {
         const messages = await getMessageService({

@@ -58,4 +58,4 @@ const uploadToCloudinary = async (buffer, filename, folder, resourceType = 'auto
     });
 };
 
-export default uploadToCloudinary;
+ export default uploadToCloudinary;
