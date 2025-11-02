@@ -11,11 +11,6 @@ const messageSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  messageType: {
-    type: String,
-    enum: ['text', 'image', 'video', 'audio', 'document', 'location'],
-    default: 'text'
-  },
   message: {
     type: String,
     trim: true 
@@ -26,9 +21,7 @@ const messageSchema = new mongoose.Schema({
   thumbnailUrl: {
     type: String
   },
-  fileName: {
-    type: String
-  },
+  fileUrl: { type: String, default: null },
   fileSize: {
     type: Number
   },
@@ -77,7 +70,32 @@ const messageSchema = new mongoose.Schema({
   },
   editedAt: {
     type: Date
-  }
+  },
+  publicId: {
+    type: String,
+    default: null,
+  },
+  cloudinaryId: {
+    type: String,
+    default: null,
+  },
+  fileType: {
+    type: String,
+    // enum: ['image', 'video', 'audio', 'document'],
+    // default: 'image',
+  },
+  mimeType: {
+    type: String,
+    default: null,
+  },
+  fileSize: {
+    type: Number,
+    default: null,
+  },
+  uploadedAt: {
+    type: Date,
+    default: null,
+  },
 }, {
   timestamps: true
 });

@@ -1,44 +1,67 @@
 import { generateResponse } from "../../middleware/responseFormate.js";
-import { senderMessageService, getMessageService} from "./message.service.js";
+import { senderMessageService, getMessageService } from "./message.service.js";
 
+const sendMessage = async(req, res, next) => {
+    try {
+        const { receiverId, message, messageType, mediaUrl } = req.body;
+        const senderId = req.user._id;
+        const file = req.file;
 
-const sendMessage = async(req, res, next) =>{
+        // ✅ Validate input
+        if (!receiverId) {
+            return generateResponse(res, 400, false, "Receiver ID is required", null);
+        }
 
-    const { receiverId, message, messageType, mediaUrl} = req.body;
-    const senderId = req.user._id;
+        if (!message && !file) {
+            return generateResponse(res, 400, false, "Message or file is required", null);
+        }
 
-    try{
+        console.log('📨 Send message request:', {
+            receiverId,
+            senderId,
+            message,
+            hasFile: !!file,
+            fileName: file?.originalname
+        });
 
-        const result = await senderMessageService({ receiverId, message, senderId, messageType, mediaUrl});
-        generateResponse(res, 201, true, "Message Send Successfully", result);
+        const result = await senderMessageService({ 
+            receiverId, 
+            message, 
+            senderId, 
+            messageType, 
+            mediaUrl, 
+            file 
+        });
 
-    }catch(err){
-        generateResponse(res, 404, false, "Provide corrected information", null);
+        generateResponse(res, 201, true, "Message sent successfully", result);
+
+    } catch(err) {
+        console.error('❌ Send message error:', err);
+        generateResponse(res, 500, false, err.message || "Failed to send message", null);
     }
 }
 
 const getMessage = async (req, res) => {
-  const { page = 1, limit = 10, sort = "-createdAt" } = req.query;
-  const { id } = req.params; // receiverId
-  const senderId = req.user._id;
-  const receiverId = id;
+    const { page = 1, limit = 50, sort = "-createdAt" } = req.query;
+    const { id } = req.params; // receiverId
+    const senderId = req.user._id;
+    const receiverId = id;
 
-  try {
-    const messages = await getMessageService({
-      receiverId,
-      senderId,
-      page: Number(page),
-      limit: Number(limit),
-      sort,
-    });
+    try {
+        const messages = await getMessageService({
+            receiverId,
+            senderId,
+            page: Number(page),
+            limit: Number(limit),
+            sort,
+        });
 
-    generateResponse(res, 200, true, "Get all messages successfully", messages);
-  } catch (err) {
-    console.error(err);
-    generateResponse(res, 404, false, "Send valid id", null);
-  }
+        generateResponse(res, 200, true, "Messages retrieved successfully", messages);
+    } catch (err) {
+        console.error('❌ Get messages error:', err);
+        generateResponse(res, 404, false, err.message || "Failed to retrieve messages", null);
+    }
 };
-
 
 export {
     sendMessage,

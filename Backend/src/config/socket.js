@@ -16,6 +16,7 @@ export const initializeSocket = (httpServer) => {
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
     },
     transports: ['websocket', 'polling'],
+    maxHttpBufferSize: 50 * 1024 * 1024,
   });
 
   // Socket connection handler
