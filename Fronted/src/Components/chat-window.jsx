@@ -1,9 +1,11 @@
-// Chat Window Component
+//chat window
+
 import { useState, useRef, useEffect } from "react";
-import { Send, Phone, Video, Search, MoreVertical, Menu, MessageCircle, Users, Settings, ArrowLeft, Paperclip, Smile, Mic } from "lucide-react";
+import { Send, Phone, Video, Search, MoreVertical, ArrowLeft, Paperclip, Smile, Mic, MessageCircle } from "lucide-react";
 import io from "socket.io-client";
 
-import  Button  from "./Button.jsx";
+import Button from "./Button.jsx";
+
 function ChatWindow({ selectedChat, onBack, isMobileView }) {
   const [errors, setErrors] = useState({});
   const [messages, setMessages] = useState([]);
@@ -11,18 +13,20 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
   const [formData, setFormData] = useState({ message: "" });
   const messagesEndRef = useRef(null);
   const socket = useRef(null);
-  const selectedChatRef = useRef(null); // ✅ persistent reference
+  const selectedChatRef = useRef(null);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const ENDPOINT = "http://localhost:4000";
-  const id = selectedChat?._id || selectedChat?.id || null;
+  const receiverId = selectedChat?._id || selectedChat?.id || null;
   const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user?._id;
+  const senderId = user?._id;
 
   // ✅ Fetch messages
   const fetchMessages = async () => {
-    if (!id) return;
+    if (!receiverId) return;
     try {
-      const response = await fetch(`${ENDPOINT}/api/messages/get/${id}`, {
+      const response = await fetch(`${ENDPOINT}/api/messages/get/${receiverId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -31,41 +35,139 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
       });
 
       const result = await response.json();
+
       if (result.status) {
         setMessages(result.data);
-        socket.current?.emit("join-chat", id);
+        console.log(`✅ Fetched ${result.data.length} messages`);
       }
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     }
   };
 
-  // ✅ Initialize socket connection
+  // ✅ Initialize socket connection (once)
   useEffect(() => {
-    socket.current = io(ENDPOINT);
-    socket.current.emit("setup", userId); // safer custom event
-    socket.current.on("connect", () => setSocketConnected(true));
+    if (!senderId) return;
 
-    return () => socket.current?.disconnect();
-  }, [userId]);
-
-  // ✅ Fetch messages when chat changes
-  useEffect(() => {
-    fetchMessages();
-    selectedChatRef.current = selectedChat;
-  }, [id]);
-
-  // ✅ Listen for new messages
-  useEffect(() => {
-    socket.current?.on("receive-message", (newMessage) => {
-      if (!selectedChatRef.current || newMessage.chatId !== selectedChatRef.current.id) return;
-      setMessages((prev) => [...prev, newMessage]);
+    socket.current = io(ENDPOINT, {
+      transports: ['websocket', 'polling'],
+    });
+    
+    // Join personal room
+    socket.current.emit("join", senderId);
+    
+    socket.current.on("connected", () => {
+      setSocketConnected(true);
+      console.log("✅ Socket connected successfully");
     });
 
+    socket.current.on("joined-chat", (data) => {
+      console.log("✅ Successfully joined chat room:", data.chatRoomId);
+    });
+
+    // Listen for incoming messages
+    socket.current.on("receive-message", (newMessage) => {
+      console.log("📩 Received message:", newMessage);
+      
+      // Add message and prevent duplicates
+      setMessages((prev) => {
+        // Check if message already exists
+        const exists = prev.some(m => m._id === newMessage._id);
+        if (exists) {
+          console.log("⚠️ Duplicate message detected, ignoring");
+          return prev;
+        }
+        console.log("✅ Adding new message to state");
+        return [...prev, newMessage];
+      });
+    });
+
+    // Error handling
+    socket.current.on("error", (error) => {
+      console.error("❌ Socket error:", error);
+    });
+
+    //typing handling
+    socket.current.on("typing", () => setIsTyping(true));
+    socket.current.on("stop-typing", () => setIsTyping(false));
+
     return () => {
+      console.log("🔌 Disconnecting socket");
       socket.current?.off("receive-message");
+      socket.current?.off("connected");
+      socket.current?.off("joined-chat");
+      socket.current?.off("error");
+      socket.current?.disconnect();
     };
-  }, []);
+  }, [senderId]);
+
+
+  //typing handler
+  const typingHandler = (e) =>{
+    setMessages(e.target.value);
+
+    if(!socketConnected) return;
+
+    if(!typing){
+      setTyping(true);
+      socket.current.emit("typing", selectedChat?._id || selectedChat?.id);
+    }
+
+    let lastTypingTime = new Date().getTime();
+    let timerLength = 3000;
+
+    setTimeout(() =>{
+      let timeNow = new Date().getTime();
+      let timeDiff = timeNow - lastTypingTime;
+
+      if(timeDiff >= timerLength && typing){
+        socket.current.emit("stop-typing", selectedChat?._id || selectedChat?.id);
+        setTyping(false);
+      }
+    }, timerLength); 
+  }
+
+  // ✅ Handle chat selection changes
+  useEffect(() => {
+    if (!receiverId || !senderId) return;
+
+    console.log("📋 Chat changed:", {
+      receiverId,
+      receiverName: selectedChat?.name,
+      senderId
+    });
+
+    // Leave previous chat room if exists
+    if (selectedChatRef.current) {
+      const prevReceiverId = selectedChatRef.current._id || selectedChatRef.current.id;
+      socket.current?.emit("leave-chat", {
+        senderId: senderId,
+        receiverId: prevReceiverId
+      });
+    }
+
+    // Update ref
+    selectedChatRef.current = selectedChat;
+
+    // Fetch messages
+    fetchMessages();
+
+    // Join new chat room with BOTH IDs
+    socket.current?.emit("join-chat", { 
+      senderId: senderId, 
+      receiverId: receiverId 
+    });
+
+    // Cleanup on unmount or chat change
+    return () => {
+      if (receiverId && senderId) {
+        socket.current?.emit("leave-chat", {
+          senderId: senderId,
+          receiverId: receiverId
+        });
+      }
+    };
+  }, [receiverId, senderId]);
 
   // ✅ Scroll to bottom
   useEffect(() => {
@@ -96,6 +198,9 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
       return;
     }
 
+    const messageText = formData.message;
+    setFormData({ message: "" }); // Clear input immediately
+
     try {
       const response = await fetch(`${ENDPOINT}/api/messages/send`, {
         method: "POST",
@@ -104,30 +209,41 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
           Authorization: "Bearer " + localStorage.getItem("token"),
         },
         body: JSON.stringify({
-          chatId: id,
-          message: formData.message,
+          receiverId: receiverId,
+          senderId: senderId,
+          message: messageText,
         }),
       });
 
       const data = await response.json();
-      console.log(data);
-      console.log(userId);
+
       if (response.ok) {
-        setMessages((prev) => [...prev, data.data]);
+        console.log("✅ Message saved to database:", data.data);
+
+        // Emit to socket with complete message object
         socket.current.emit("send-message", {
-          chatId: id,
-          senderId: userId,
-          content: formData.message,
+          receiverId: receiverId,
+          senderId: senderId,
+          message: data.data, // Complete message object from backend
         });
-        setFormData({ message: "" });
+
+        // Add to local state (check for duplicates)
+        setMessages((prev) => {
+          const exists = prev.some(m => m._id === data.data._id);
+          if (!exists) {
+            return [...prev, data.data];
+          }
+          return prev;
+        });
       } else {
         console.error(data.message || "Message sending failed");
+        setFormData({ message: messageText }); // Restore on error
       }
     } catch (error) {
       console.error("An error occurred while sending message:", error);
+      setFormData({ message: messageText }); // Restore on error
     }
   };
-
 
   if (!selectedChat) {
     return (
@@ -196,62 +312,36 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1d5db' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}
       >
-        {/* {selectedChat.messages.length > 0 ? (
+        {messages.length > 0 ? (
           <>
-            {selectedChat.messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"} animate-fadeIn`}>
+            {messages.map((msg) => {
+              // ✅ Handle both object and string senderId
+              const msgSenderId = typeof msg.senderId === 'object' 
+                ? msg.senderId._id 
+                : msg.senderId;
+              
+              const isMyMessage = msgSenderId === senderId;
+              
+              return (
                 <div
-                  className={`max-w-[75%] md:max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-sm ${
-                    msg.isOwn
-                      ? "bg-green-500 text-white rounded-br-none"
-                      : "bg-white text-gray-900 rounded-bl-none"
-                  }`}
+                  key={msg._id}
+                  className={`flex ${isMyMessage ? "justify-end" : "justify-start"} animate-fadeIn`}
                 >
-                  <p className="text-sm break-words whitespace-pre-wrap">{msg.text}</p>
-                  {msg.link && (
-                    <a
-                      href={msg.link}
-                      className={`text-xs underline mt-1 block hover:opacity-80 ${
-                        msg.isOwn ? "text-green-100" : "text-green-600"
-                      }`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {msg.link}
-                    </a>
-                  )}
-                  <div className={`flex items-center gap-1 mt-1 ${msg.isOwn ? "justify-end" : "justify-start"}`}>
-                    <p className={`text-xs ${msg.isOwn ? "text-green-100" : "text-gray-500"}`}>
-                      {msg.time}
-                    </p>
-                    {msg.isOwn && (
-                      <span className="text-xs text-green-100">✓✓</span>
-                    )}
+                  <div
+                    className={`max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${
+                      isMyMessage
+                        ? "bg-green-500 text-white rounded-br-none"
+                        : "bg-white text-gray-900 rounded-bl-none"
+                    }`}
+                  >
+                    <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                    <div className={`text-xs mt-1 ${isMyMessage ? 'text-green-100' : 'text-gray-400'}`}>
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))} */}
-            {messages.length > 0 ? (
-          <>
-            {messages.map((msg) => (
-              <div
-                key={msg._id}
-                className={`flex ${msg.sender?._id === userId ? "justify-end" : "justify-start"} animate-fadeIn`}
-              >
-                <div
-                  className={`max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${
-                    msg.sender?._id === localStorage.getItem("userId")
-                      ? "bg-green-500 text-white rounded-br-none"
-                      : "bg-white text-gray-900 rounded-bl-none"
-                  }`}
-                >
-                  <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </>
         ) : (
@@ -269,7 +359,7 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
           <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 flex-shrink-0 hidden md:inline-flex">
             <Smile className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 flex-shrink-0 md:hidden">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 flex-shrink-0">
             <Paperclip className="h-5 w-5" />
           </Button>
           <div className="flex-1 relative">
@@ -278,7 +368,7 @@ function ChatWindow({ selectedChat, onBack, isMobileView }) {
               name="message"
               placeholder="Type a message"
               value={formData.message}
-              onChange={handleChange}
+              onChange={typingHandler}
               onKeyPress={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

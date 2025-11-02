@@ -73,7 +73,7 @@ export default function ChatApp() {
     setSelectedChat(null);
   };
 
-  const handleSendMessage = (chatId, messageText) => {
+  const handleSendMessage = (receiverId, messageText) => {
     const newMessage = {
       id: Date.now(),
       sender: "You",
@@ -84,7 +84,7 @@ export default function ChatApp() {
 
     setChats(prevChats => 
       prevChats.map(chat => 
-        chat.id === chatId
+        chat.id === receiverId
           ? {
               ...chat,
               messages: [...chat.messages, newMessage],

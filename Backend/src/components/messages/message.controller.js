@@ -4,12 +4,12 @@ import { senderMessageService, getMessageService} from "./message.service.js";
 
 const sendMessage = async(req, res, next) =>{
 
-    const { chatId, message, messageType, mediaUrl} = req.body;
+    const { receiverId, message, messageType, mediaUrl} = req.body;
     const senderId = req.user._id;
 
     try{
 
-        const result = await senderMessageService({ chatId, message, senderId, messageType, mediaUrl});
+        const result = await senderMessageService({ receiverId, message, senderId, messageType, mediaUrl});
         generateResponse(res, 201, true, "Message Send Successfully", result);
 
     }catch(err){
@@ -19,7 +19,7 @@ const sendMessage = async(req, res, next) =>{
 
 const getMessage = async (req, res) => {
   const { page = 1, limit = 10, sort = "-createdAt" } = req.query;
-  const { id } = req.params;
+  const { id } = req.params; // receiverId
   const senderId = req.user._id;
   const receiverId = id;
 
@@ -38,7 +38,6 @@ const getMessage = async (req, res) => {
     generateResponse(res, 404, false, "Send valid id", null);
   }
 };
-
 
 
 export {

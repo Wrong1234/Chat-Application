@@ -8,9 +8,6 @@ import { applyMiddleware } from './middleware/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import  routes  from './routes/index.js';
-import cors from "cors";
-import helmet from "helmet";
-
 dotenv.config();
 
 const app = express();
