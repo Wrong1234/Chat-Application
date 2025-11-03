@@ -35,7 +35,7 @@ export const registerUserService = async ({
 export const loginUserService = async ({ email, password }) => {
   if (!email || !password) throw new Error('Email and password are required');
 
-  const user = await User.findOne({ email }).select("_id firstName lastName email role profileImage");
+  const user = await User.findOne({ email }).select("_id fullName email role profileImage");
 
   if (!user) throw new Error('User not found');
 
@@ -61,6 +61,11 @@ export const loginUserService = async ({ email, password }) => {
     }
   };
 };
+
+export const updateProfileService = async({ fullName, email, phone, file}) => {
+
+  
+}
 
 
 // export const refreshAccessTokenService = async (refreshToken) => {

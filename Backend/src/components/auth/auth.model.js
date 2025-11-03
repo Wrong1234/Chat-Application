@@ -16,52 +16,52 @@ const AddressSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    username: { type: String },
-    phone: {type: String},
-    dob: { type: Date, default: null },
-    gender: {
+      fullName: { type: String, required: true },
+      email: { type: String, required: true, unique: true },
+      password: { type: String, required: true },
+      username: { type: String },
+      phone: {type: String},
+      dob: { type: Date, default: null },
+      gender: {
+        type: String,
+        enum: ['male', 'female', 'other'],
+        default: 'male'
+      },
+
+      role: {
+        type: String,
+        default: "USER",
+        enum: ['USER', 'ADMIN'],
+      },
+
+      stripeAccountId: { type: String, default: null },
+
+      bio: { type: String, default: '' },
+      address: { type: AddressSchema, default: () => ({}) },
+
+      profileImage: { type: String, default: '' },
+      multiProfileImage: { type: [String], default: [] },
+      pdfFile: { type: String, default: '' },
+      about: {
       type: String,
-      enum: ['male', 'female', 'other'],
-      default: 'male'
+      default: 'Hey there! I am using WhatsApp'
     },
-
-    role: {
-      type: String,
-      default: "USER",
-      enum: ['USER', 'ADMIN'],
+    isOnline: {
+      type: Boolean,
+      default: false
     },
-
-    stripeAccountId: { type: String, default: null },
-
-    bio: { type: String, default: '' },
-    address: { type: AddressSchema, default: () => ({}) },
-
-    profileImage: { type: String, default: '' },
-    multiProfileImage: { type: [String], default: [] },
-    pdfFile: { type: String, default: '' },
-    about: {
-    type: String,
-    default: 'Hey there! I am using WhatsApp'
-  },
-  isOnline: {
-    type: Boolean,
-    default: false
-  },
-  lastSeen: {
-    type: Date,
-    default: Date.now
-  },
-  contacts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  blockedUsers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+    lastSeen: {
+      type: Date,
+      default: Date.now
+    },
+    contacts: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    blockedUsers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
 
     otp: {
       type: String,
