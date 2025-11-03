@@ -1,15 +1,20 @@
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useLoginMutation } from "../store/api/authApi"; 
+import { setCredentials } from "../store/slices/authSlice"; 
 
-export default function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState('');
+
+function LoginForm() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -18,240 +23,189 @@ export default function LoginForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
     }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Please enter a valid email";
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 8)
+      newErrors.password = "Password must be at least 8 characters";
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
+    setMessage("");
     setErrors({});
-    
-    // Validate form
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setLoading(false);
       return;
     }
 
-    console.log('Login data:', formData);
-
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          remember: formData.remember,
+      const result = await login({
+        email: formData.email,
+        password: formData.password,
+        remember: formData.remember,
+      }).unwrap();
+
+      setMessage("Login successful! Redirecting...");
+      dispatch(
+        setCredentials({
+          user: result.user,
+          token: result.token || result.accessToken,
         })
-      });
+      );
 
-      const data = await response.json();
-
-     if (response.ok) {
-        const { accessToken, refreshToken, user } = data.data; // ✅ correct destructure
-
-        setMessage('Login successful! Redirecting...');
-        // Optional: store user info
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('token', accessToken);
-
-        // Clear form
-        setFormData({
-          email: '',
-          password: '',
-          remember: false,
-        });
-
-        // Redirect
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
-      } else {
-        if (data.errors) {
-          setErrors(data.errors);
-        } else {
-          setMessage(data.message || 'Login failed. Please check your credentials.');
-        }
-      }
-    }catch(err){
-      setMessage('An error occurred. Please try again.');
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err.data?.errors) setErrors(err.data.errors);
+      else setMessage(err.data?.message || "Login failed. Please try again.");
     }
   };
 
+  const hasErrors = Object.keys(errors).length > 0;
+
   return (
-    <div className="space-y-5 w-md mx-auto p-10 shadow-amber-600 border mt-5 rounded-2xl mb-6">
-      {/* Header */}
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
-        <p className="text-muted-foreground">
-          Sign in to your account to continue
-        </p>
-      </div>
-
-      {/* Success/Error Message Display */}
-      {message && (
-        <div className={`p-3 rounded-lg text-center ${
-          message.includes('success') 
-            ? 'bg-green-100 text-green-800 border border-green-300' 
-            : 'bg-red-100 text-red-800 border border-red-300'
-        }`}>
-          {message}
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Email Input */}
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="text-sm font-medium text-foreground"
-          >
-            Email address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-smooth"
-              required
-            />
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gray-50">
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl shadow-xl">
+          {/* Icon Header */}
+          <div className="flex items-center justify-center mb-6">
+            <MessageCircle className="w-8 h-8 text-blue-600" />
           </div>
-          {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
-        </div>
 
-        {/* Password Input */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-foreground"
-            >
-              Password
-            </label>
-            <a
-              href="#"
-              className="text-sm text-primary hover:text-accent transition-smooth"
-            >
-              Forgot password?
-            </a>
+          {/* Title */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
+            <p className="text-sm text-gray-500">Sign in to connect and chat</p>
           </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full pl-10 pr-12 py-3 bg-input border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-smooth"
-              required
-            />
+
+          {/* Message */}
+          {message && (
+            <div
+              className={`p-3 rounded-xl text-center mb-6 font-medium text-sm ${
+                message.includes("success")
+                  ? "bg-green-100 text-green-700 border border-green-300"
+                  : "bg-red-100 text-red-700 border border-red-300"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          {/* Errors */}
+          {hasErrors && !message && (
+            <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6">
+              <ul className="space-y-2">
+                {Object.entries(errors).map(([field, error]) => (
+                  <li key={field} className="text-red-700 text-sm flex gap-2">
+                    <span>•</span>
+                    <span>{error}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-12 py-2.5 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center gap-3 py-2">
+              <input
+                type="checkbox"
+                name="remember"
+                checked={formData.remember}
+                onChange={handleChange}
+                className="w-4 h-4 border rounded cursor-pointer accent-blue-600"
+              />
+              <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                Remember me
+              </label>
+            </div>
+
+            {/* Submit */}
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-smooth"
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5" />
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Eye className="w-5 h-5" />
+                <>
+                  Sign in
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </button>
-          </div>
-          {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
+          </form>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Don't have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="font-bold text-blue-600 hover:text-blue-700"
+            >
+              Create one
+            </button>
+          </p>
         </div>
-
-        {/* Remember Me */}
-        <div className="flex items-center">
-          <input
-            id="remember"
-            name="remember"
-            type="checkbox"
-            checked={formData.remember}
-            onChange={handleChange}
-            className="w-4 h-4 rounded border-border bg-input cursor-pointer accent-primary"
-          />
-          <label
-            htmlFor="remember"
-            className="ml-2 text-sm text-muted-foreground cursor-pointer"
-          >
-            Remember me
-          </label>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 px-4 bg-amber-400 cursor-pointer from-primary to-accent text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              Signing in...
-            </>
-          ) : (
-            <>
-              Sign in
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
-      </form>
-
-      {/* Switch to Signup */}
-      <p className="text-center text-muted-foreground">
-        Don't have an account?{" "}
-        <button
-          type="button"
-          onClick={() => navigate('/signup')}
-          className="text-primary font-semibold hover:text-accent transition-smooth cursor-pointer"
-        >
-          Sign up
-        </button>
-      </p>
+      </div>
     </div>
   );
 }
+
+export default LoginForm;

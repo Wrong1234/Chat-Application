@@ -44,9 +44,11 @@ export const authApi = createApi({
         body: credentials,
       }),
       transformResponse: (response) => {
-        if (response.token) {
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
+         const { accessToken, refreshToken, user } = response.data || {};
+        if (accessToken && user) {
+          localStorage.setItem('token', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+          localStorage.setItem('user', JSON.stringify(user));
         }
         return response;
       },

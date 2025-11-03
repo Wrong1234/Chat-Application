@@ -2,11 +2,11 @@ import { generateResponse } from '../../middleware/responseFormate.js';
 import User from './auth.model.js';
 import {
   loginUserService,
-  registerUserService
+  registerUserService,
+  updateProfileService
 } from './auth.service.js';
 import dotenv from 'dotenv';
 dotenv.config();
-import jwt from 'jsonwebtoken';
 
 
 export const registerUser = async (req, res, next) => {
@@ -63,6 +63,21 @@ export const loginUser = async (req, res, next) => {
     }
   }
 };
+
+export const updateProfile = async(req, res, next) =>{
+  try{
+
+    const { fullName, email, phone } = req.body;
+    const file = req?.file;
+    const userId = req.user._id;
+
+    const result = await updateProfileService( fullName, email, phone, file, userId);
+    generateResponse( res, 201, true, "Update profile successfully", result);
+
+  }catch(err){
+    generateResponse(res, 404, false, "Provide correct image or file or text", null);
+  }
+}
 
 
 export const getAllUsers = async (req, res, next) => {
