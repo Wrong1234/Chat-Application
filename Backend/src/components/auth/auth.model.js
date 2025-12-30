@@ -30,8 +30,8 @@ const UserSchema = new mongoose.Schema(
 
       role: {
         type: String,
-        default: "USER",
-        enum: ['USER', 'ADMIN'],
+        default: "User",
+        enum: ['User', 'Admin'],
       },
 
       stripeAccountId: { type: String, default: null },

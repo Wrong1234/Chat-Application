@@ -1,6 +1,19 @@
-// Chat Item Component
+interface ChatItemProps {
+  chat: {
+    id: string
+    _id: string
+    name: string
+    message: string
+    time: string
+    avatar: string
+    unread: number
+    online: boolean
+  }
+  isSelected: boolean
+  onClick: () => void
+}
 
-function ChatItem({ chat, isSelected, onClick }) {
+export default function ChatItem({ chat, isSelected, onClick }: ChatItemProps) {
   return (
     <div
       onClick={onClick}
@@ -19,25 +32,19 @@ function ChatItem({ chat, isSelected, onClick }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-sm text-gray-900 truncate">
-              {chat.name}
-            </h3>
-            <span className="text-xs text-gray-500 flex-shrink-0">
-              {chat.time}
-            </span>
+            <h3 className="font-semibold text-sm text-gray-900 truncate">{chat.name}</h3>
+            <span className="text-xs text-gray-500 flex-shrink-0">{chat.time}</span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-1">
             <p className="text-xs text-gray-600 truncate flex-1">{chat.message}</p>
             {chat.unread > 0 && (
               <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-medium">{chat.unread }</span>
+                <span className="text-white text-xs font-medium">{chat.unread}</span>
               </div>
             )}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
-
-export default ChatItem;
