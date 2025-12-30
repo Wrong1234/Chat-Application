@@ -44,7 +44,7 @@ const sendMessage = async(req, res, next) => {
 // Controller
 const getMessage = async (req, res) => {
 
-    const { page = 1, limit = 50, sort = "-createdAt" } = req.query;
+    const { page = 1, limit = 10, sort = "-createdAt" } = req.query;
     const { id } = req.params; // receiverId
     const senderId = req.user._id;
     const receiverId = id;
