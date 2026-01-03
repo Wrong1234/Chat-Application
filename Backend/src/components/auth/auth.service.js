@@ -14,8 +14,9 @@ export const registerUserService = async ({
   phone,
 }) => {
   const existingUser1 = await User.findOne({ email });
-  const existingUser2 = await User.findOne({ phone });
-  if (existingUser1 || existingUser2) throw new Error('User already registered.');
+  // const existingUser2 = await User.findOne({ phone });
+  // console.log(existingUser1, existingUser2);
+  if (existingUser1) throw new Error('User already registered.');
 
   const newUser = new User({
     fullName,

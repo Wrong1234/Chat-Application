@@ -5,7 +5,7 @@ export const SOCKET_URL = "http://localhost:4000"
 // API Headers helper
 export const getHeaders = () => {
   const token = localStorage.getItem("token")
-  console.log(token);
+ 
   return {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),

@@ -36,8 +36,8 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 onClick={() => window.open(message.fileUrl, "_blank")}
               />
             ) : (
-              <a
-                href={message.fileUrl}
+              
+               <a href={message.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`flex items-center gap-2 p-2 rounded ${isOwn ? "bg-green-600" : "bg-gray-100"}`}
@@ -48,9 +48,7 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             )}
           </div>
         )}
-
         {message.message && <p className="text-sm break-words whitespace-pre-wrap">{message.message}</p>}
-
         <div className={`text-xs mt-1 ${isOwn ? "text-green-100" : "text-gray-400"}`}>
           {formatTime(message.createdAt)}
         </div>
