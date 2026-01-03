@@ -3,7 +3,7 @@ import { Search, Menu } from "lucide-react"
 import { useChatContext } from "../context/ChatContext"
 import { useUsers } from "../hooks/useUsers"
 import { useAuthContext } from "../context/AuthContext"
-import ChatItem from "./ChatItem"
+import ChatItem from "./ChatListItem"
 import SettingsPanel from "./SettingsPanel"
 
 interface SidebarProps {

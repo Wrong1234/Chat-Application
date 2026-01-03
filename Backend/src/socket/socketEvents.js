@@ -4,9 +4,20 @@
 
 import { logger } from '../utils/logger.js';
 
-export const handleJoinUser = (socket, senderId) => {
+// Track online users
+const onlineUsers = new Map();
+
+export const handleJoinUser = (io, socket, senderId) => {
   // Join personal room for user-specific notifications
   socket.join(`user:${senderId}`);
+  
+  // Mark user as online
+  onlineUsers.set(senderId, socket.id);
+  socket.userId = senderId; // Store userId on socket for disconnect handling
+  
+  // Broadcast to all users that this user is online
+  io.emit('user-online', { userId: senderId });
+  
   socket.emit("connected");
   logger.info(`👤 User ${senderId} joined personal room: user:${senderId}`);
 };
@@ -23,16 +34,18 @@ export const handleJoinChat = (socket, data) => {
   const chatRoomId = [senderId, receiverId].sort().join('-');
   
   socket.join(`chat:${chatRoomId}`);
-  logger.info(`💬 User ${senderId} joined chat room: chat:${chatRoomId}`);
+  // logger.info(`💬 User ${senderId} joined chat room: chat:${chatRoomId}`);
   
-  // Notify the socket which room they joined
-  socket.emit("joined-chat", { chatRoomId: `chat:${chatRoomId}` });
+  // Notify the socket which room they joined and send receiver's online status
+  const isReceiverOnline = onlineUsers.has(receiverId);
+  socket.emit("joined-chat", { 
+    chatRoomId: `chat:${chatRoomId}`,
+    receiverOnline: isReceiverOnline
+  });
 };
 
 export const handleSendMessage = (io, socket, data) => {
   try {
-
-    
     const { receiverId, senderId, message } = data;
 
     if (!receiverId || !senderId || !message) {
@@ -100,8 +113,27 @@ export const handleLeaveChat = (socket, data) => {
     const chatRoomId = [senderId, receiverId].sort().join('-');
     socket.leave(`chat:${chatRoomId}`);
     
-    logger.info(`👋 User ${senderId} left chat room: chat:${chatRoomId}`);
+    // logger.info(`👋 User ${senderId} left chat room: chat:${chatRoomId}`);
   } catch (err) {
     console.error("⚠️ Error handling leave-chat:", err);
   }
+};
+
+export const handleDisconnect = (io, socket) => {
+  const userId = socket.userId;
+  
+  if (userId) {
+    // Remove from online users
+    onlineUsers.delete(userId);
+    
+    // Broadcast to all users that this user is offline
+    io.emit('user-offline', { userId });
+    
+    logger.info(`🔴 User ${userId} disconnected and marked offline`);
+  }
+};
+
+// Helper function to get all online users (optional, for initial load)
+export const getOnlineUsers = () => {
+  return Array.from(onlineUsers.keys());
 };

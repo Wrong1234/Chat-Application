@@ -1,5 +1,5 @@
 // ============================================
-// FILE: src/socket/socketHandler.js - FIXED VERSION
+// FILE: src/socket/socketHandler.js
 // ============================================
 
 import { logger } from '../utils/logger.js';
@@ -10,6 +10,7 @@ import {
   handleTyping,
   handleStopTyping,
   handleLeaveChat,
+  handleDisconnect,
 } from './socketEvents.js';
 
 export const socketHandler = (io, socket) => {
@@ -17,7 +18,7 @@ export const socketHandler = (io, socket) => {
   
   socket.on('join', (senderId) => {
     if (senderId) {
-      handleJoinUser(socket, senderId);
+      handleJoinUser(io, socket, senderId);
     } else {
       logger.error("❌ Join event received without senderId");
     }
@@ -44,7 +45,7 @@ export const socketHandler = (io, socket) => {
   });
 
   socket.on('disconnect', () => {
-    logger.info(`🔴 User disconnected: ${socket.id}`);
+    handleDisconnect(io, socket);
   });
 
   socket.on('error', (error) => {
