@@ -64,10 +64,8 @@ export const handleTyping = (socket, data) => {
       return;
     }
     
-    // Create chat room ID
     const chatRoomId = [senderId, receiverId].sort().join('-');
     
-    // Emit to chat room (excluding sender)
     socket.to(`chat:${chatRoomId}`).emit('user-typing', { userId: senderId });
   } catch (err) {
     console.error("⚠️ Error handling typing:", err);
@@ -82,11 +80,10 @@ export const handleStopTyping = (socket, data) => {
       return;
     }
     
-    // Create chat room ID
     const chatRoomId = [senderId, receiverId].sort().join('-');
     
-    // Emit to chat room (excluding sender)
     socket.to(`chat:${chatRoomId}`).emit('user-stop-typing', { userId: senderId });
+    
   } catch (err) {
     console.error("⚠️ Error handling stop-typing:", err);
   }

@@ -3,7 +3,6 @@ import { Phone, Video, Search, MoreVertical, ArrowLeft } from "lucide-react"
 import { useChatContext } from "../context/ChatContext"
 import MessageList from "./MessageList"
 import MessageInput from "./MessageInput"
-import TypingIndicator from "./TypingIndicator"
 
 interface ChatWindowProps {
   onBack: () => void
@@ -12,7 +11,6 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
   const { selectedChat } = useChatContext()
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
 
   if (!selectedChat) {
     return (
@@ -60,9 +58,6 @@ export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
 
       {/* Messages */}
       <MessageList receiverId={selectedChat._id || selectedChat.id} />
-
-      {/* Typing Indicator */}
-      {typingUsers.size > 0 && <TypingIndicator />}
 
       {/* Input */}
       <MessageInput

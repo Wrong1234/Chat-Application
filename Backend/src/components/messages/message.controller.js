@@ -33,6 +33,10 @@ const sendMessage = async(req, res, next) => {
             file 
         });
 
+        const io = req.app.get('io');
+        const chatRoomId = [senderId, receiverId].sort().join('-');
+        io.to(`chat:${chatRoomId}`).emit('receive-message', result);
+        
         generateResponse(res, 201, true, "Message sent successfully", result);
 
     } catch(err) {
@@ -48,7 +52,6 @@ const getMessage = async (req, res) => {
     const { id } = req.params; // receiverId
     const senderId = req.user._id;
     const receiverId = id;
-
 
     try {
         const messages = await getMessageService({
