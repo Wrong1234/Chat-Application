@@ -52,7 +52,7 @@ export const useMessages = (receiverId: string | null) => {
         formData.append("file", data.file)
       }
 
-      const response = await fetch(`http://localhost:4000/api/messages/send`, {
+      const response = await fetch(`https://chat-application-vvl3.onrender.com/api/messages/send`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
