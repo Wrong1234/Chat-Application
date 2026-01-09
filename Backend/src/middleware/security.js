@@ -15,7 +15,7 @@ export const applyMiddleware = (app) => {
   
   // CORS
   app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:5173' || "https://chat-application-rho-rust.vercel.app",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   }));

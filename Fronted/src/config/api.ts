@@ -1,6 +1,6 @@
 // API Configuration for TanStack Query
-export const API_BASE_URL = "http://localhost:4000/api"
-export const SOCKET_URL = "http://localhost:4000"
+export const API_BASE_URL = "https://chat-application-vvl3.onrender.com/api"
+export const SOCKET_URL = "https://chat-application-vvl3.onrender.com"
 
 // API Headers helper
 export const getHeaders = () => {
