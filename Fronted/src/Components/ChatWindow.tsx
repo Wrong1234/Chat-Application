@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Phone, Video, Search, MoreVertical, ArrowLeft } from "lucide-react"
 import { useChatContext } from "../context/ChatContext"
 import MessageList from "./MessageList"
@@ -10,8 +9,8 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
-  const { selectedChat } = useChatContext()
-
+  const { selectedChat, onlineUsers } = useChatContext()
+  
   if (!selectedChat) {
     return (
       <div className="hidden md:flex flex-1 items-center justify-center bg-gray-50">
@@ -21,6 +20,8 @@ export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
       </div>
     )
   }
+
+  const isOnline = onlineUsers[selectedChat._id || selectedChat.id] || false
 
   return (
     <div
@@ -34,12 +35,28 @@ export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
+          
+          {/* Avatar with online indicator */}
+          <div className="relative">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+              {selectedChat.name?.charAt(0).toUpperCase()}
+            </div>
+            {/* Online status dot */}
+            <div
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                isOnline ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+          </div>
+          
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-gray-900 truncate">{selectedChat.name}</h2>
-            <p className="text-xs text-gray-500">{selectedChat.online ? "Active now" : "Offline"}</p>
+            <p className="text-xs text-gray-500">
+              {isOnline ? "Active now" : "Offline"}
+            </p>
           </div>
         </div>
-
+        
         <div className="flex items-center gap-2">
           <button className="p-2 hover:bg-gray-100 rounded-full transition">
             <Phone className="h-5 w-5 text-gray-600" />
@@ -55,10 +72,10 @@ export default function ChatWindow({ onBack, isMobileView }: ChatWindowProps) {
           </button>
         </div>
       </div>
-
+      
       {/* Messages */}
       <MessageList receiverId={selectedChat._id || selectedChat.id} />
-
+      
       {/* Input */}
       <MessageInput
         receiverId={selectedChat._id || selectedChat.id}

@@ -1,4 +1,3 @@
-// FILE: ChatInput.tsx
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Send } from "lucide-react"
 import { useAuthContext } from "../context/AuthContext"
@@ -19,7 +18,7 @@ export default function ChatInput({ receiverId, onSendMessage }: ChatInputProps)
   const handleTyping = useCallback(() => {
     if (!receiverId || !currentUser?._id) return
 
-    // Emit typing event if not already typing
+   
     if (!isTypingRef.current) {
       emit('typing', {
         senderId: currentUser._id,
@@ -28,12 +27,11 @@ export default function ChatInput({ receiverId, onSendMessage }: ChatInputProps)
       isTypingRef.current = true
     }
 
-    // Clear existing timeout
+ 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
 
-    // Set timeout to stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       emit('stop-typing', {
         senderId: currentUser._id,
