@@ -1,11 +1,8 @@
 import express from 'express';
 import {
   loginUser,
-  registerUser,
-  getAllUsers
-} from './auth.controller.js';
-import { verifyToken } from '../../middleware/authMiddleware.js';
-// import { verifyToken } from '../../core/middlewares/authMiddleware.js';
+  registerUser
+} from './auth.controller';
 
 
 const router = express.Router();
@@ -13,7 +10,6 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/users', verifyToken, getAllUsers);
 // router.post('/forget-password', forgetPassword);
 // router.post('/verify-code', verifyCode);
 // router.post('/reset-password', resetPassword);

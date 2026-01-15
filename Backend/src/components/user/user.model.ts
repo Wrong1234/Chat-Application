@@ -1,8 +1,11 @@
 // import RoleType from '../../lib/types.js';
-import mongoose from 'mongoose';
+import mongoose, { model, Model, Schema } from 'mongoose';
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
-import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../config/config.js';
+import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../config/config';
+import { IUser, IUserMethods } from './user.interface';
+
+// import { accessTokenExpires, accessTokenSecrete, refreshTokenExpires, refreshTokenSecrete } from '../../config/config';
 
 
 const AddressSchema = new mongoose.Schema({
@@ -14,7 +17,7 @@ const AddressSchema = new mongoose.Schema({
 }, { _id: false });
 
 
-const UserSchema = new mongoose.Schema(
+const UserSchema = new Schema<IUser, {}, IUserMethods>(
   {
       fullName: { type: String, required: true },
       email: { type: String, required: true, unique: true },
@@ -95,7 +98,6 @@ const UserSchema = new mongoose.Schema(
 
     hasActiveSubscription: { type: Boolean, default: false },
     subscriptionExpireDate: { type: Date, default: null },
-    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     language: { type: String, default: 'en' }
   },
   { timestamps: true }
@@ -114,13 +116,11 @@ UserSchema.pre("save", async function (next) {
 });
 
 // Password comparison method (bcrypt)
-UserSchema.methods.comparePassword = async function (id, plainPassword) {
-  const { password: hashedPassword } = await User.findById(id).select('password')
-
-  const isMatched = await bcrypt.compare(plainPassword, hashedPassword)
-
-  return isMatched
-}
+UserSchema.methods.comparePassword = async function (
+  plainPassword: string
+): Promise<boolean> {
+  return bcrypt.compare(plainPassword, this.password);
+};
 
 // Generate ACCESS_TOKEN
 UserSchema.methods.generateAccessToken = function (payload) {
@@ -131,6 +131,8 @@ UserSchema.methods.generateAccessToken = function (payload) {
 UserSchema.methods.generateRefreshToken = function (payload) {
   return jwt.sign(payload, refreshTokenSecrete, { expiresIn: refreshTokenExpires });
 };
+type UserModel = Model<IUser, {}, IUserMethods>;
 
-const User = mongoose.models.User || mongoose.model('User', UserSchema);
+const User = model<IUser, UserModel>('User', UserSchema);
+
 export default User;
