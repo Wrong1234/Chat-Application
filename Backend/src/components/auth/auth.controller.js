@@ -236,3 +236,6 @@ export const getAllUsers = async (req, res, next) => {
 //     next(error);
 //   }
 // };
+
+//removed last commit github command
+// git reset --hard HEAD~1
