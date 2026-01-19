@@ -4,9 +4,10 @@
 
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 
-  "mongodb+srv://learnMongodb:HLrsY7oQwSKhOnD0@lerarnmongodb.lvnv3wl.mongodb.net/chatapp";
+const MONGODB_URI = process.env.MONGODB_URI ;
 
 export const connectDatabase = async () => {
   try {
